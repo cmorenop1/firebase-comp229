@@ -1,23 +1,20 @@
 let express = require('express');
 let router = express.Router();
+let inventoryController = require('../controllers/inventory');
 
-let moongose = require('mongoose');
+router.get('/list', inventoryController.list);
 
-let Inventory = require('../models/inventory');
+/* GET Route for displaying the Add page - CREATE Operation */
+router.get('/add', inventoryController.displayAddPage);
 
-router.get('/list', function(req, res, next) {
-    Inventory.find((err, inventoryList) => {
-        
-        if(err)
-        {
-            return console.error(err);
-        }
-        else{
-            console.log(inventoryList);
-        }
-    });
+/* POST Route for processing the Add page - CREATE Operation */
+router.post('/add', inventoryController.processAddPage);
 
-    res.render('index', { title: 'About' });
-  });
+// Routers for edit
+router.get('/edit/:id', inventoryController.displayEditPage);
+router.post('/edit/:id', inventoryController.processEditPage);
+
+// Delete
+router.get('/delete/:id', inventoryController.performDelete);
 
 module.exports = router;

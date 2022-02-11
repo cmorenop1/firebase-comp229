@@ -3,5 +3,10 @@ exports.home = function(req, res, next) {
 }
 
 exports.projects = function(req, res, next) {
-    res.render('index', { title: 'Projects' });
+    res.render(
+        'index', 
+        { 
+            title: 'Projects' 
+        }
+    );
 }
