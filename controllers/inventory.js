@@ -8,30 +8,31 @@ exports.list = function(req, res, next) {
             return console.error(err);
         }
         else{
-            res.render(
-                'inventory/list', 
-                { 
-                    title: 'Inventory List',
-                    InventoryList: inventoryList,
-                    userName: req.user ? req.user.username : '' 
-                }
-            );
+            // res.render(
+            //     'inventory/list', 
+            //     { 
+            //         title: 'Inventory List',
+            //         InventoryList: inventoryList,
+            //         userName: req.user ? req.user.username : '' 
+            //     }
+            // );
+            res.status(200).json(inventoryList);
         }
     });
 }
 
-module.exports.displayAddPage = (req, res, next) => {
+// module.exports.displayAddPage = (req, res, next) => {
     
-    let newItem = Inventory();
+//     let newItem = Inventory();
 
-    res.render('inventory/add_edit', {
-        title: 'Add a new Item',
-        item: newItem,
-        userName: req.user ? req.user.username : '' 
-    })          
-}
+//     res.render('inventory/add_edit', {
+//         title: 'Add a new Item',
+//         item: newItem,
+//         userName: req.user ? req.user.username : '' 
+//     })          
+// }
 
-module.exports.processAddPage = (req, res, next) => {
+module.exports.processAdd = (req, res, next) => {
     
     let newItem = Inventory({
         _id: req.body.id,
@@ -50,41 +51,46 @@ module.exports.processAddPage = (req, res, next) => {
         if(err)
         {
             console.log(err);
-            res.end(err);
+            // res.end(err);
+            return res.status(400).send({
+                success: false,
+                message: getErrorMessage(err)
+            });
         }
         else
         {
             // refresh the book list
             console.log(item);
-            res.redirect('/inventory/list');
+            // res.redirect('/inventory/list');
+            return res.status(200).json(item);
         }
     });
 }
 
 
-module.exports.displayEditPage = (req, res, next) => {
-    let id = req.params.id;
+// module.exports.displayEditPage = (req, res, next) => {
+//     let id = req.params.id;
 
-    Inventory.findById(id, (err, itemToEdit) => {
-        if(err)
-        {
-            console.log(err);
-            res.end(err);
-        }
-        else
-        {
-            //show the edit view
-            res.render('inventory/add_edit', {
-                title: 'Edit Item', 
-                item: itemToEdit,
-                userName: req.user ? req.user.username : '' 
-            })
-        }
-    });
-}
+//     Inventory.findById(id, (err, itemToEdit) => {
+//         if(err)
+//         {
+//             console.log(err);
+//             res.end(err);
+//         }
+//         else
+//         {
+//             //show the edit view
+//             res.render('inventory/add_edit', {
+//                 title: 'Edit Item', 
+//                 item: itemToEdit,
+//                 userName: req.user ? req.user.username : '' 
+//             })
+//         }
+//     });
+// }
 
 
-module.exports.processEditPage = (req, res, next) => {
+module.exports.processEdit = (req, res, next) => {
     let id = req.params.id
 
     let updatedItem = Inventory({

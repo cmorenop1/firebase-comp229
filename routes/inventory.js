@@ -17,13 +17,13 @@ function requireAuth(req, res, next)
 router.get('/list', inventoryController.list);
 
 /* GET Route for displaying the Add page - CREATE Operation */
-router.get('/add', requireAuth, inventoryController.displayAddPage);
+// router.get('/add', requireAuth, inventoryController.displayAddPage);
 /* POST Route for processing the Add page - CREATE Operation */
-router.post('/add', requireAuth, inventoryController.processAddPage);
+router.post('/add', inventoryController.processAdd);
 
 // Routers for edit
-router.get('/edit/:id', requireAuth, inventoryController.displayEditPage);
-router.post('/edit/:id', requireAuth, inventoryController.processEditPage);
+// router.get('/edit/:id', requireAuth, inventoryController.displayEditPage);
+router.post('/edit/:id', requireAuth, inventoryController.processEdit);
 
 // Delete
 router.get('/delete/:id', requireAuth, inventoryController.performDelete);
