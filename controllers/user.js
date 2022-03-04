@@ -1,19 +1,22 @@
 let User = require('../models/user');
 let passport = require('passport');
 
-exports.user = function(req, res, next) {
-    res.render('user', { 
-        title: 'Users',
-        name: 'Student'
-    });
-}
+let jwt = require('jsonwebtoken');
+let config = require('../config/config');
 
-exports.julio = function(req, res, next) {
-    res.render('user', { 
-        title: 'User',
-        name: 'Julio'
-    });
-}
+// exports.user = function(req, res, next) {
+//     res.render('user', { 
+//         title: 'Users',
+//         name: 'Student'
+//     });
+// }
+
+// exports.julio = function(req, res, next) {
+//     res.render('user', { 
+//         title: 'User',
+//         name: 'Julio'
+//     });
+// }
 
 function getErrorMessage(err) {
     console.log("===> Erro: " + err);
@@ -37,26 +40,26 @@ function getErrorMessage(err) {
     return message;
   };
 
-  module.exports.renderSignup = function(req, res, next) {
-    if (!req.user) {
+  // module.exports.renderSignup = function(req, res, next) {
+  //   if (!req.user) {
   
-      // creates a empty new user object.
-      let newUser = User();
+  //     // creates a empty new user object.
+  //     let newUser = User();
   
-      res.render('auth/signup', {
-        title: 'Sign-up Form',
-        messages: req.flash('error'),
-        user: newUser
-      });
+  //     res.render('auth/signup', {
+  //       title: 'Sign-up Form',
+  //       messages: req.flash('error'),
+  //       user: newUser
+  //     });
   
-    } else {
-      return res.redirect('/');
-    }
-  };
+  //   } else {
+  //     return res.redirect('/');
+  //   }
+  // };
 
   
 module.exports.signup = function(req, res, next) {
-    if (!req.user) {
+    // if (!req.user) {
       console.log(req.body);
   
       let user = new User(req.body);
@@ -67,49 +70,117 @@ module.exports.signup = function(req, res, next) {
         if (err) {
           let message = getErrorMessage(err);
   
-          req.flash('error', message);
+          // req.flash('error', message);
           // return res.redirect('/users/signup');
-          return res.render('auth/signup', {
-            title: 'Sign-up Form',
-            messages: req.flash('error'),
-            user: user
-          });
+          // return res.render('auth/signup', {
+          //   title: 'Sign-up Form',
+          //   messages: req.flash('error'),
+          //   user: user
+          // });
+          return res.status(400).json(
+            {
+              success: false, 
+              message: message
+            }
+          );
         }
-        req.login(user, (err) => {
-          if (err) return next(err);
-          return res.redirect('/');
-        });
+        // req.login(user, (err) => {
+        //   if (err) return next(err);
+        //   return res.redirect('/');
+        // });
+        return res.status(200).json(
+          {
+            success: true, 
+            message: 'User created successfully!'
+          }
+        );
+
       });
-    } else {
-      return res.redirect('/');
-    }
+    // } else {
+    //   return res.redirect('/');
+    // }
   };
 
 
-  module.exports.renderSignin = function(req, res, next) {
-    if (!req.user) {
-      res.render('auth/signin', {
-        title: 'Sign-in Form',
-        messages: req.flash('error') || req.flash('info')
-      });
-    } else {
-      console.log(req.user);
-      return res.redirect('/');
-    }
-  };
+  // module.exports.renderSignin = function(req, res, next) {
+  //   if (!req.user) {
+  //     res.render('auth/signin', {
+  //       title: 'Sign-in Form',
+  //       messages: req.flash('error') || req.flash('info')
+  //     });
+  //   } else {
+  //     console.log(req.user);
+  //     return res.redirect('/');
+  //   }
+  // };
 
  
 module.exports.signin = function(req, res, next){
-    passport.authenticate('local', {   
-      successRedirect: req.session.url || '/',
-      failureRedirect: '/users/signin',
-      failureFlash: true
-    })(req, res, next);
-    delete req.session.url;
+    passport.authenticate(
+      // 'local', 
+      'login', 
+      // {   
+      //   successRedirect: req.session.url || '/',
+      //   failureRedirect: '/users/signin',
+      //   failureFlash: true
+      // }
+      async (err, user, info) => {
+        try {
+          if (err || !user) {
+            return res.status(400)
+              .json(
+                { 
+                  success: false, 
+                  message: err || info.message
+                }
+              );
+          }
+      
+          req.login(
+              user,
+              { session: false },
+              async (error) => {
+                if (error) {
+                  return next(error);
+                }
+
+                const payload = 
+                  { 
+                    _id: user._id, 
+                    email: user.email
+                  };
+
+                const token = jwt.sign(
+                  { 
+                    payload: payload
+                  }, 
+                  config.SECRETKEY, 
+                  { 
+                    algorithm: 'HS512', 
+                    expiresIn: "20min"
+                  }
+                );
+        
+                return res.json(
+                    { 
+                      success: true, 
+                      token: token 
+                    }
+                  );
+              }
+            );
+          } catch (error) {
+            // return next(error);
+            console.log(error);
+            return res.status(400).json({ success: false, message: error});
+          }
+        }
+    )(req, res, next);
+    // delete req.session.url;
   } 
 
 
-  module.exports.signout = function(req, res, next) {
-    req.logout();
-    res.redirect('/');
-  };
+  // module.exports.signout = function(req, res, next) {
+  //   req.logout();
+  //   res.redirect('/');
+  // };

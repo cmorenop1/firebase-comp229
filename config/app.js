@@ -6,6 +6,7 @@ let logger = require('morgan');
 // let session = require('express-session');
 // let flash = require('connect-flash');
 let passport = require('passport');
+let compression = require('compression');
 
 let errorHandler = require('./error-handler');
 
@@ -15,6 +16,9 @@ let usersRouter = require('../routes/users');
 let inventoryRouter = require('../routes/inventory');
 
 let app = express();
+
+// compress all responses
+app.use(compression());
 
 // app.use(session({
 //   saveUninitialized: true,
