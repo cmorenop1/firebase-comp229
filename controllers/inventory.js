@@ -5,6 +5,9 @@ function getErrorMessage(err) {
         for (let errName in err.errors) {
             if (err.errors[errName].message) return err.errors[errName].message;
         }
+    } 
+    if (err.message) {
+        return err.message;
     } else {
         return 'Unknown server error';
     }
@@ -44,37 +47,46 @@ exports.list = function(req, res, next) {
 
 module.exports.processAdd = (req, res, next) => {
     
-    let newItem = Inventory({
-        _id: req.body.id,
-        item: req.body.item,
-        qty: req.body.qty,
-        status: req.body.status,
-        size : {
-            h: req.body.size_h,
-            w: req.body.size_w,
-            uom: req.body.size_uom,
-        },
-        tags: req.body.tags.split(",").map(word => word.trim())
-    });
+    try {
+        let newItem = Inventory({
+            _id: req.body.id,
+            item: req.body.item,
+            qty: req.body.qty,
+            status: req.body.status,
+            size : {
+                h: req.body.size.h,
+                w: req.body.size.w,
+                uom: req.body.size.uom,
+            },
+            tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
+        });
+    
+        Inventory.create(newItem, (err, item) =>{
+            if(err)
+            {
+                console.log(err);
+                // res.end(err);
+                return res.status(400).send({
+                    success: false,
+                    message: getErrorMessage(err)
+                });
+            }
+            else
+            {
+                // refresh the book list
+                console.log(item);
+                // res.redirect('/inventory/list');
+                return res.status(200).json(item);
+            }
+        });
+    } catch (error) {
+        return res.status(400).send({
+            success: false,
+            message: getErrorMessage(error)
+        });
+    }
 
-    Inventory.create(newItem, (err, item) =>{
-        if(err)
-        {
-            console.log(err);
-            // res.end(err);
-            return res.status(400).send({
-                success: false,
-                message: getErrorMessage(err)
-            });
-        }
-        else
-        {
-            // refresh the book list
-            console.log(item);
-            // res.redirect('/inventory/list');
-            return res.status(200).json(item);
-        }
-    });
+    
 }
 
 
@@ -101,7 +113,9 @@ module.exports.processAdd = (req, res, next) => {
 
 
 module.exports.processEdit = (req, res, next) => {
-    let id = req.params.id
+
+    try {
+        let id = req.params.id
 
     let updatedItem = Inventory({
         _id: id,
@@ -109,11 +123,11 @@ module.exports.processEdit = (req, res, next) => {
         qty: req.body.qty,
         status: req.body.status,
         size : {
-            h: req.body.size_h,
-            w: req.body.size_w,
-            uom: req.body.size_uom,
+            h: req.body.size.h,
+            w: req.body.size.w,
+            uom: req.body.size.uom,
         },
-        tags: req.body.tags.split(",").map(word => word.trim())
+        tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
     });
 
     console.log(updatedItem);
@@ -143,6 +157,13 @@ module.exports.processEdit = (req, res, next) => {
             );
         }
     });
+    } catch (error) {
+        return res.status(400).send({
+            success: false,
+            message: getErrorMessage(error)
+        });
+    }
+    
 }
 
 module.exports.performDelete = (req, res, next) => {
