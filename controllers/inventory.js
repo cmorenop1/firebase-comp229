@@ -117,46 +117,46 @@ module.exports.processEdit = (req, res, next) => {
     try {
         let id = req.params.id
 
-    let updatedItem = Inventory({
-        _id: id,
-        item: req.body.item,
-        qty: req.body.qty,
-        status: req.body.status,
-        size : {
-            h: req.body.size.h,
-            w: req.body.size.w,
-            uom: req.body.size.uom,
-        },
-        tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
-    });
+        let updatedItem = Inventory({
+            _id: id,
+            item: req.body.item,
+            qty: req.body.qty,
+            status: req.body.status,
+            size : {
+                h: req.body.size.h,
+                w: req.body.size.w,
+                uom: req.body.size.uom,
+            },
+            tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
+        });
 
-    console.log(updatedItem);
+        console.log(updatedItem);
 
-    Inventory.updateOne({_id: id}, updatedItem, (err) => {
-        if(err)
-        {
-            console.log(err);
-            // res.end(err);
-            return res.status(400).json(
-                { 
-                  success: false, 
-                  message: getErrorMessage(err)
-                }
-            );
-        }
-        else
-        {
-            // console.log(req.body);
-            // refresh the book list
-            // res.redirect('/inventory/list');
-            return res.status(200).json(
-                { 
-                  success: true, 
-                  message: 'Item updated successfully.'
-                }
-            );
-        }
-    });
+        Inventory.updateOne({_id: id}, updatedItem, (err) => {
+            if(err)
+            {
+                console.log(err);
+                // res.end(err);
+                return res.status(400).json(
+                    { 
+                    success: false, 
+                    message: getErrorMessage(err)
+                    }
+                );
+            }
+            else
+            {
+                // console.log(req.body);
+                // refresh the book list
+                // res.redirect('/inventory/list');
+                return res.status(200).json(
+                    { 
+                    success: true, 
+                    message: 'Item updated successfully.'
+                    }
+                );
+            }
+        });
     } catch (error) {
         return res.status(400).send({
             success: false,
@@ -167,28 +167,37 @@ module.exports.processEdit = (req, res, next) => {
 }
 
 module.exports.performDelete = (req, res, next) => {
-    let id = req.params.id;
 
-    Inventory.remove({_id: id}, (err) => {
-        if(err)
-        {
-            console.log(err);
-            // res.end(err);
-            return res.status(400).send({
-                success: false,
-                message: getErrorMessage(err)
-            });
-        }
-        else
-        {
-            // refresh the book list
-            // res.redirect('/inventory/list');
-            return res.status(200).json(
-                {
-                    success: true,
-                    message: "Item removed successfully."
-                }
-            );
-        }
-    });
+    try {
+        let id = req.params.id;
+
+        Inventory.remove({_id: id}, (err) => {
+            if(err)
+            {
+                console.log(err);
+                // res.end(err);
+                return res.status(400).send({
+                    success: false,
+                    message: getErrorMessage(err)
+                });
+            }
+            else
+            {
+                // refresh the book list
+                // res.redirect('/inventory/list');
+                return res.status(200).json(
+                    {
+                        success: true,
+                        message: "Item removed successfully."
+                    }
+                );
+            }
+        });
+    } catch (error) {
+        return res.status(400).send({
+            success: false,
+            message: getErrorMessage(error)
+        });
+    }
+    
 }

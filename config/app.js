@@ -20,7 +20,7 @@ let app = express();
 
 // Enable cors
 app.use(cors());
-// app.options('*', cors());
+app.options('*', cors());
 
 // compress all responses
 app.use(compression());
