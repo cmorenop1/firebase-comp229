@@ -1,4 +1,5 @@
 let Inventory = require('../models/inventory');
+let fs = require('firebase-admin');
 
 function getErrorMessage(err) {
     if (err.errors) {
@@ -13,25 +14,28 @@ function getErrorMessage(err) {
     }
 };
 
-exports.list = function(req, res, next) {
+exports.list = async function(req, res, next) {
 
-    Inventory.find((err, inventoryList) => {
-        if(err)
-        {
-            return console.error(err);
-        }
-        else{
-            // res.render(
-            //     'inventory/list', 
-            //     { 
-            //         title: 'Inventory List',
-            //         InventoryList: inventoryList,
-            //         userName: req.user ? req.user.username : '' 
-            //     }
-            // );
-            res.status(200).json(inventoryList);
-        }
-    });
+    try {
+        // get the firebase instance of firestore
+        let db = fs.firestore();
+
+        // get all documents
+        let allDocs = await db.collection('inventory').get();
+
+        let docs = [];
+        allDocs.docs.map(item => {
+            docs.push(item.data());
+        })
+
+        res.status(200).json(docs);
+
+    } catch (error) {
+        return res.status(400).send({
+            success: false,
+            message: getErrorMessage(error)
+        });
+    }
 }
 
 // module.exports.displayAddPage = (req, res, next) => {
@@ -45,11 +49,17 @@ exports.list = function(req, res, next) {
 //     })          
 // }
 
-module.exports.processAdd = (req, res, next) => {
+module.exports.processAdd = async (req, res, next) => {
     
     try {
-        let newItem = Inventory({
-            _id: req.body.id,
+        // get the firebase instance of firestore
+        let db = fs.firestore();
+
+        // Generate "locally" a new document in a collection
+        let newDocument = db.collection('inventory').doc();
+
+        let newItem = {
+            _id: newDocument.id,
             item: req.body.item,
             qty: req.body.qty,
             status: req.body.status,
@@ -59,26 +69,14 @@ module.exports.processAdd = (req, res, next) => {
                 uom: req.body.size.uom,
             },
             tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
-        });
+        };
+
+        let response = await newDocument.set(newItem);
+
+        console.log(response);
+
+        return res.status(200).json(newItem)
     
-        Inventory.create(newItem, (err, item) =>{
-            if(err)
-            {
-                console.log(err);
-                // res.end(err);
-                return res.status(400).send({
-                    success: false,
-                    message: getErrorMessage(err)
-                });
-            }
-            else
-            {
-                // refresh the book list
-                console.log(item);
-                // res.redirect('/inventory/list');
-                return res.status(200).json(item);
-            }
-        });
     } catch (error) {
         return res.status(400).send({
             success: false,
@@ -112,12 +110,12 @@ module.exports.processAdd = (req, res, next) => {
 // }
 
 
-module.exports.processEdit = (req, res, next) => {
+module.exports.processEdit = async (req, res, next) => {
 
     try {
         let id = req.params.id
 
-        let updatedItem = Inventory({
+        let updatedItem = {
             _id: id,
             item: req.body.item,
             qty: req.body.qty,
@@ -128,35 +126,22 @@ module.exports.processEdit = (req, res, next) => {
                 uom: req.body.size.uom,
             },
             tags: req.body.tags != "" ? req.body.tags.split(",").map(word => word.trim()) : ""
-        });
+        }
 
-        console.log(updatedItem);
+        // get the firebase instance of firestore
+        let db = fs.firestore();
 
-        Inventory.updateOne({_id: id}, updatedItem, (err) => {
-            if(err)
-            {
-                console.log(err);
-                // res.end(err);
-                return res.status(400).json(
-                    { 
-                    success: false, 
-                    message: getErrorMessage(err)
-                    }
-                );
+        let response = await db.collection('inventory').doc(id).set(updatedItem);
+
+        console.log(response);
+
+        return res.status(200).json(
+            { 
+            success: true, 
+            message: 'Item updated successfully.'
             }
-            else
-            {
-                // console.log(req.body);
-                // refresh the book list
-                // res.redirect('/inventory/list');
-                return res.status(200).json(
-                    { 
-                    success: true, 
-                    message: 'Item updated successfully.'
-                    }
-                );
-            }
-        });
+        );
+        
     } catch (error) {
         return res.status(400).send({
             success: false,
@@ -166,33 +151,25 @@ module.exports.processEdit = (req, res, next) => {
     
 }
 
-module.exports.performDelete = (req, res, next) => {
+module.exports.performDelete = async (req, res, next) => {
 
     try {
         let id = req.params.id;
 
-        Inventory.remove({_id: id}, (err) => {
-            if(err)
+        // get the firebase instance of firestore
+        let db = fs.firestore();
+
+        let response = await db.collection('inventory').doc(id).delete();
+
+        console.log(response);
+
+        return res.status(200).json(
             {
-                console.log(err);
-                // res.end(err);
-                return res.status(400).send({
-                    success: false,
-                    message: getErrorMessage(err)
-                });
+                success: true,
+                message: "Item removed successfully."
             }
-            else
-            {
-                // refresh the book list
-                // res.redirect('/inventory/list');
-                return res.status(200).json(
-                    {
-                        success: true,
-                        message: "Item removed successfully."
-                    }
-                );
-            }
-        });
+        );
+
     } catch (error) {
         return res.status(400).send({
             success: false,
